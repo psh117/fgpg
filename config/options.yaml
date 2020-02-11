@@ -1,0 +1,59 @@
+
+# preliminary point generation method
+
+#point_generation_method: random_sample
+point_generation_method: geometry_analysis
+
+
+# d: depth of the gripper
+# h: width of the gripper
+# l: total length of the gripper
+# x1l: size of bottom gripper (width)
+# y1l: size of bottom gripper (height)
+# z2l: size of gripper finger (width)
+# x4l: size of bar of the gripper (length)
+# z4l: size of bar of the gripper (width)
+#                 d      h     l     
+gripper_params: [0.0135, 0.05, 0.03, 0.01, 0.01, 0.01]
+gripper_depth_epsilon: 0.0035
+
+# only for 'geometry_analysis' method
+point_distance: 0.025
+
+# only for 'random_sample' method
+random_point_num: 5000 # n_t
+
+# condition that determine whether the poses are same pose (m, rad)
+remove_same_pose: true
+same_dist: 0.01 # m, 
+same_angle: 0.3141592 # rad 
+
+## data save
+output_file_suffix: .yaml
+
+
+# display options
+
+## display position
+camera_position: [1.5, 1.5, 1.5, 0.0, 0.0, 1.0]
+
+attach_coordination: false
+
+## background color
+background_color: [1.0, 1.0, 1.0]
+mesh_color: [0.3529,0.1592,0.1608]
+point_color: [0.8353,0.7686,0.6314]
+gripper_color: [0.3059, 0.4118, 0.102]
+
+gripper_opacity: 0.4
+point_opacity: 1.0
+point_size: 15
+
+display_figure: true
+display_hand: true
+display_collision: false
+display_preliminary_points: true # not yet (always true)
+
+
+leaf_size: 0.05
+num_orientation_leaf: 3

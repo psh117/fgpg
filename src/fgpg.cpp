@@ -24,7 +24,6 @@ int main(int argc, char** argv)
       ROS_ERROR("Failed to load yaml file");
   }
 
-  
   // random with microsec
   struct timespec spec;
   clock_gettime(CLOCK_REALTIME, &spec);
@@ -46,8 +45,6 @@ int main(int argc, char** argv)
   std::ofstream of(file_name + config.output_file_suffix);
   gpg.saveGraspCandidates(of);
 
-
-  //////////////////////////////////////////
   GraspCoverageEvaluator gce;
 
   const auto & grasp_cand = gpg.getGraspData();

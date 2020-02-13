@@ -68,6 +68,21 @@ void GraspPointGenerator::generate()
   collisionCheck();
 }
 
+void GraspPointGenerator::findGraspableOutline()
+{
+  for (auto & plane : planes_)
+  {
+    for(auto & line : plane.line_data)
+    {
+      for (auto & grasp : line.sampled_grasp_data)
+      {
+        collisionCheck(grasp);
+      }
+      line.calcGraspable();
+    }
+  }
+}
+
 void GraspPointGenerator::display(pcl::PolygonMesh& mesh)
 {
   if(config_.display_figure)
@@ -138,6 +153,43 @@ void GraspPointGenerator::display(pcl::PolygonMesh& mesh)
   }
 }
 
+void GraspPointGenerator::displayOutline(pcl::PolygonMesh& mesh)
+{
+  if(config_.display_figure)
+  {
+    pcl::visualization::PCLVisualizer vis1 ("Generated preliminary points");
+    vis1.addPointCloud<pcl::PointXYZRGBNormal> (candid_result_cloud);
+    vis1.addPolygonMesh(mesh, "meshes",0);
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, config_.mesh_color[0], config_.mesh_color[1], config_.mesh_color[2], "meshes");
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, "meshes");
+    vis1.setBackgroundColor (config_.background_color[0], config_.background_color[1], config_.background_color[2]);
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, config_.point_size);
+    vis1.addPointCloudNormals<pcl::PointXYZRGBNormal> (candid_result_cloud, 1, .01f,"cloud_normals");
+    if(config_.attach_coordination)
+      vis1.addCoordinateSystem(0.1);
+    vis1.setCameraPosition(config_.camera_position[0],config_.camera_position[1],config_.camera_position[2],config_.camera_position[3],config_.camera_position[4],config_.camera_position[5]);
+
+
+    int line_id = 0;
+    for (auto & plane : planes_)
+    {
+      for(auto & line : plane.line_data)
+      {
+        if(line.graspable)
+        {
+          PointT p1, p2;
+          eigen2PCL(line.points.first, p1, 255,0,0);
+          eigen2PCL(line.points.second, p2, 255,0,0);
+          vis1.addLine(p1,p2,std::string("line") + std::to_string(line_id++));
+        }
+      }
+    }
+
+    vis1.spin ();
+
+  }
+}
+
 void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
 {  
   of << "grasp_points: " << std::endl;
@@ -156,7 +208,38 @@ void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
   }
 }
 
-void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector)
+void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData plane)
+{
+  plane.calculateIncenter();
+
+  auto & n = plane.normal;
+  auto & p1 = plane.points[0];
+  auto & p2 = plane.points[1];
+  auto & p3 = plane.points[2];
+
+  std::vector<Line> lines;
+  lines.push_back(std::make_pair(p1, p3));
+  lines.push_back(std::make_pair(p2, p1));
+  lines.push_back(std::make_pair(p3, p2));
+
+  for(int i=0; i<3; i++)
+  {
+    Eigen::Vector3d e = lines[i].first - lines[i].second;
+    Eigen::Vector3d c = (n.cross(e)).normalized();
+    
+    Eigen::Vector3d new_p1, new_p2;
+    double grasp_length = config_.gripper_params[0] - config_.gripper_depth_epsilon;
+    new_p1 = lines[i].first + c * grasp_length;
+    new_p2 = lines[i].second + c * grasp_length;
+
+    plane.line_data[i].points = lines[i];
+    plane.line_data[i].approach_direction = c;
+
+    samplePointsInLine (n, new_p1, new_p2, c, plane.line_data[i]);
+  }
+}
+
+void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector, LineData & line_data)
 {
   Eigen::Vector3d u = p2 - p1; // e
   double len = u.norm(); // ||e||
@@ -170,11 +253,11 @@ void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen:
   {
     Eigen::Vector3d new_p;
     new_p = p1 + u_norm * (config_.point_distance/2 + i * real_point_dist);
-    makePair(norm,new_p,direction_vector);
+    makePair(norm,new_p,direction_vector, line_data);
   }
 }
 
-void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector)
+void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector, LineData & line_data)
 {
   static int h = 0;
   PointT pcl_point_1;
@@ -213,32 +296,6 @@ void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d 
       break;
       
     }
-  }
-}
-void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData plane)
-{
-  plane.calculateIncenter();
-
-  auto & n = plane.normal;
-  auto & p1 = plane.points[0];
-  auto & p2 = plane.points[1];
-  auto & p3 = plane.points[2];
-
-  std::vector<Line> lines;
-  lines.push_back(std::make_pair(p1, p3));
-  lines.push_back(std::make_pair(p2, p1));
-  lines.push_back(std::make_pair(p3, p2));
-
-  for (auto & line : lines)
-  {
-    Eigen::Vector3d e = line.first - line.second;
-    Eigen::Vector3d c = (n.cross(e)).normalized();
-    
-    Eigen::Vector3d new_p1, new_p2;
-    double grasp_length = config_.gripper_params[0] - config_.gripper_depth_epsilon;
-    new_p1 = line.first + c * grasp_length;
-    new_p2 = line.second + c * grasp_length;
-    samplePointsInLine (n, new_p1, new_p2, c);
   }
 }
 
@@ -304,8 +361,8 @@ void GraspPointGenerator::randomSample ()
       std::cout << "n norm is " << n.norm() << endl;
       std::cout <<"[WARN] norm error n: " << n.transpose()<< std::endl; 
     }
-
-    makePair(n, p, dir);
+    LineData tmp;
+    makePair(n, p, dir, tmp);
   }
 }
 
@@ -332,11 +389,26 @@ void GraspPointGenerator::collisionCheck()
           continue;
         }
       }
+      grasp.available = true;
       grasp_cand_collision_free_.push_back(grasp);
     }
     else
     {
       grasp_cand_in_collision_.push_back(grasp);
+      grasp.available = false;
     }
+  }
+}
+
+void GraspPointGenerator::collisionCheck(GraspData &grasp)
+{
+  grasp.available = false;
+  
+  if (grasp.getDist() > config_.gripper_params[1] * 2);
+    return;
+
+  if(collision_check_.isFeasible(grasp.hand_transform, grasp.getDist()/2 + 0.001))
+  {
+    grasp.available = true;
   }
 }

@@ -65,7 +65,11 @@ public:
   void setConfig(const YAMLConfig &config);
   void setMesh(const std::vector <TrianglePlaneData> triangle_mesh);
   void generate();
+
+  void findGraspableOutline();
+
   void display(pcl::PolygonMesh& mesh);
+  void displayOutline(pcl::PolygonMesh& mesh);
   void saveGraspCandidates(std::ofstream &of);
 
 private:
@@ -82,12 +86,14 @@ private:
 
   YAMLConfig config_;
 
-  void samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector);
-  void makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector);
   void samplePointsInTriangle(TrianglePlaneData plane);
+  void samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector, LineData & line_data);
+  // void makePair
+  void makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector, LineData & line_data);
 
   void sample();
   void analyticSample ();
   void randomSample ();
   void collisionCheck();
+  void collisionCheck(GraspData &grasp);
 };

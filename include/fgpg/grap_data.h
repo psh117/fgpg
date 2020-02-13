@@ -32,11 +32,13 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+
 struct GraspData
 {
   std::vector<Eigen::Vector3d> points;
   Eigen::Affine3d hand_transform;
-
+  bool available {false};
+  
   friend std::ostream & operator << (std::ostream &out, const GraspData &d)
   {
     out << "transform: " << std::endl <<  d.hand_transform.matrix() << std::endl <<

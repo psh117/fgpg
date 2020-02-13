@@ -32,12 +32,39 @@
 #include <Eigen/Dense>
 #include <vector>
 
+#include "fgpg/grap_data.h"
+
+struct LineData
+{
+  Eigen::Vector3d approach_direction;
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> points;
+  std::vector<GraspData> sampled_grasp_data;
+  bool graspable {false};
+
+  void calcGraspable()
+  {
+    if(sampled_grasp_data.size() == 0)
+      return;
+    
+    graspable = true;
+
+    for (auto& grasp : sampled_grasp_data)
+      if(grasp.available == false)
+      {
+        graspable = false;
+        return;
+      }
+  }
+};
+
 struct TrianglePlaneData
 {
   Eigen::Vector3d normal;
-  std::vector < Eigen::Vector3d > points;
+  std::vector < Eigen::Vector3d > points {3};
   double area;
   Eigen::Vector3d incenter;
+
+  std::vector < LineData > line_data {3};
 
   friend std::ostream & operator << (std::ostream &out, const TrianglePlaneData &d)
   {

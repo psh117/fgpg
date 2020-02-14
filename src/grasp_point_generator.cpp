@@ -70,15 +70,27 @@ void GraspPointGenerator::generate()
 
 void GraspPointGenerator::findGraspableOutline()
 {
+  continuous_grasp_pose_.clear();
   for (auto & plane : planes_)
   {
     for(auto & line : plane.line_data)
     {
+      // std::cout << "LINE_DATA" << std::endl;
+      // std::cout << "line.sampled_grasp_data.size(): " << line.sampled_grasp_data.size() << std::endl;
       for (auto & grasp : line.sampled_grasp_data)
       {
+        // std::cout << grasp << std::endl;
         collisionCheck(grasp);
       }
       line.calcGraspable();
+      if(line.graspable)
+      {
+        ContGraspPose cgp;
+        cgp.bound = line.limit_points;
+        cgp.approach_direction = line.approach_direction;
+        cgp.normal_direction = plane.normal;
+        continuous_grasp_pose_.push_back(cgp);
+      }
     }
   }
 }
@@ -177,10 +189,17 @@ void GraspPointGenerator::displayOutline(pcl::PolygonMesh& mesh)
       {
         if(line.graspable)
         {
+          // std::cout << "GRASPABLE" << std::endl;
+          // std::cout << line.points.first.transpose() << std::endl;
+          // std::cout << line.points.second.transpose() << std::endl;
           PointT p1, p2;
-          eigen2PCL(line.points.first, p1, 255,0,0);
-          eigen2PCL(line.points.second, p2, 255,0,0);
-          vis1.addLine(p1,p2,std::string("line") + std::to_string(line_id++));
+          eigen2PCL(line.limit_points.first - line.approach_direction * 0.05, p1, 255,0,0);
+          eigen2PCL(line.limit_points.second - line.approach_direction * 0.05, p2, 255,0,0);
+          // eigen2PCL(line.points.first + line.center_dist - line.approach_direction * 0.05, p1, 255,0,0);
+          // eigen2PCL(line.points.second + line.center_dist - line.approach_direction * 0.05, p2, 255,0,0);
+          vis1.addLine(p1,p2,255,0,0,std::string("line") + std::to_string(line_id));
+          vis1.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, std::string("line") + std::to_string(line_id));
+          line_id++;
         }
       }
     }
@@ -193,7 +212,7 @@ void GraspPointGenerator::displayOutline(pcl::PolygonMesh& mesh)
 void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
 {  
   of << "grasp_points: " << std::endl;
-  Eigen::IOFormat CommaInitFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
+  Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
 
   for(auto & grasp : grasp_cand_collision_free_)
   {
@@ -204,11 +223,30 @@ void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
 
     Eigen::Quaterniond quat(new_rot);
     of << "    - position:    " << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  std::endl
-        << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
+       << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
   }
 }
 
-void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData plane)
+void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
+{  
+  of << "grasp_points: " << std::endl;
+  Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
+
+  for(auto & grasp : continuous_grasp_pose_simplified_)
+  {
+    Eigen::Matrix3d rot;
+    rot.col(0) = grasp.normal_direction.cross(grasp.approach_direction);
+    rot.col(1) = grasp.normal_direction;
+    rot.col(2) = grasp.approach_direction;
+
+    Eigen::Quaterniond quat(rot);
+    of << "    - lower_bound:    " << grasp.bound.first.transpose().format(CommaInitFmt) <<  std::endl
+       << "      upper_bound:    " << grasp.bound.second.transpose().format(CommaInitFmt) <<  std::endl
+       << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
+  }
+}
+
+void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData & plane)
 {
   plane.calculateIncenter();
 
@@ -221,12 +259,20 @@ void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData plane)
   lines.push_back(std::make_pair(p1, p3));
   lines.push_back(std::make_pair(p2, p1));
   lines.push_back(std::make_pair(p3, p2));
+  //   std::cout << "POINTS" << std::endl;
+  // std::cout << p1.transpose() << std::endl;
+  // std::cout << p2.transpose() << std::endl;
+  // std::cout << p3.transpose() << std::endl;
 
   for(int i=0; i<3; i++)
   {
     Eigen::Vector3d e = lines[i].first - lines[i].second;
     Eigen::Vector3d c = (n.cross(e)).normalized();
     
+    // std::cout << "LINES" << std::endl;
+    // std::cout << e.transpose() << std::endl;
+    // std::cout << c.transpose() << std::endl;
+    // std::cout << n.transpose() << std::endl;
     Eigen::Vector3d new_p1, new_p2;
     double grasp_length = config_.gripper_params[0] - config_.gripper_depth_epsilon;
     new_p1 = lines[i].first + c * grasp_length;
@@ -243,7 +289,8 @@ void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen:
 {
   Eigen::Vector3d u = p2 - p1; // e
   double len = u.norm(); // ||e||
-  double point_len = len - config_.point_distance;
+  // double point_len = len - config_.point_distance;
+  double point_len = len;
   int point_n = round(point_len / config_.point_distance);
   double real_point_dist = point_len / point_n;
 
@@ -252,7 +299,8 @@ void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen:
   for(int i=0; i<point_n+1; i++)
   {
     Eigen::Vector3d new_p;
-    new_p = p1 + u_norm * (config_.point_distance/2 + i * real_point_dist);
+    new_p = p1 + u_norm * (i * real_point_dist);
+    // new_p = p1 + u_norm * (config_.point_distance/2 + i * real_point_dist);
     makePair(norm,new_p,direction_vector, line_data);
   }
 }
@@ -292,8 +340,10 @@ void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d 
       gd.points.push_back(result_p);
 
       grasps_.push_back(gd);
+      line_data.sampled_grasp_data.push_back(gd);
+      // std::cout << "num: " << line_data.sampled_grasp_data.size() << std::endl;
 
-      break;
+      break; 
       
     }
   }
@@ -370,9 +420,12 @@ void GraspPointGenerator::collisionCheck()
 {
   for(auto & grasp : grasps_)
   {
+    collisionCheck(grasp);
+
     if (grasp.getDist() > config_.gripper_params[1] * 2) continue;
     if(collision_check_.isFeasible(grasp.hand_transform, grasp.getDist()/2 + 0.001))
     {
+      // std::cout << "----------_$####??2" << std::endl;
       if(config_.remove_same_pose)
       {
         bool is_same = false;
@@ -404,11 +457,25 @@ void GraspPointGenerator::collisionCheck(GraspData &grasp)
 {
   grasp.available = false;
   
-  if (grasp.getDist() > config_.gripper_params[1] * 2);
+    // std::cout << "??-0" << std::endl;
+  if (grasp.getDist() > config_.gripper_params[1] * 2)
     return;
 
+    // std::cout << "??-1" << std::endl;
   if(collision_check_.isFeasible(grasp.hand_transform, grasp.getDist()/2 + 0.001))
   {
+    // std::cout << "??-2" << std::endl;
     grasp.available = true;
   }
+}
+
+void GraspPointGenerator::simplifyContGraspCandidates()
+{
+  for(auto & g_a : continuous_grasp_pose_simplified_)
+  {
+  for(auto & g_b : continuous_grasp_pose_simplified_)
+  {
+  }
+  }
+
 }

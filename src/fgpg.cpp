@@ -40,12 +40,15 @@ int main(int argc, char** argv)
   gpg.setConfig(config);
   gpg.setMesh(triangles);
   gpg.generate();
-  // gpg.findGraspableOutline();
+  gpg.findGraspableOutline();
   gpg.display(mesh);
-  // gpg.displayOutline(mesh);
+  gpg.displayOutline(mesh);
 
   std::ofstream of(file_name + config.output_file_suffix);
   gpg.saveGraspCandidates(of);
+
+  std::ofstream of_cont(file_name + ".cont"+ config.output_file_suffix);
+  gpg.saveContGraspCandidates(of_cont);
 
   GraspCoverageEvaluator gce;
 

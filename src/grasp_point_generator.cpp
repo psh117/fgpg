@@ -170,13 +170,13 @@ void GraspPointGenerator::displayOutline(pcl::PolygonMesh& mesh)
   if(config_.display_figure)
   {
     pcl::visualization::PCLVisualizer vis1 ("Generated preliminary points");
-    vis1.addPointCloud<pcl::PointXYZRGBNormal> (candid_result_cloud);
+    // vis1.addPointCloud<pcl::PointXYZRGBNormal> (candid_result_cloud);
     vis1.addPolygonMesh(mesh, "meshes",0);
     vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, config_.mesh_color[0], config_.mesh_color[1], config_.mesh_color[2], "meshes");
     vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, "meshes");
     vis1.setBackgroundColor (config_.background_color[0], config_.background_color[1], config_.background_color[2]);
     vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, config_.point_size);
-    vis1.addPointCloudNormals<pcl::PointXYZRGBNormal> (candid_result_cloud, 1, .01f,"cloud_normals");
+    // vis1.addPointCloudNormals<pcl::PointXYZRGBNormal> (candid_result_cloud, 1, .01f,"cloud_normals");
     if(config_.attach_coordination)
       vis1.addCoordinateSystem(0.1);
     vis1.setCameraPosition(config_.camera_position[0],config_.camera_position[1],config_.camera_position[2],config_.camera_position[3],config_.camera_position[4],config_.camera_position[5]);
@@ -222,8 +222,11 @@ void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
     new_rot.col(2) = grasp.hand_transform.linear().col(0);
 
     Eigen::Quaterniond quat(new_rot);
-    of << "    - position:    " << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  std::endl
-       << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
+    of << "    - [" << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  
+              ", [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]]" << std::endl; 
+    // Eigen::Quaterniond quat(new_rot);
+    // of << "    - position:    " << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  std::endl
+    //    << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
   }
 }
 

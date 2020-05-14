@@ -11,10 +11,10 @@
  @see http://geomalgorithms.com/a05-_intersect-1.html
 */
 bool calcLinePlaneIntersection(
-  TrianglePlaneData plane, 
-  Eigen::Vector3d p0, 
-  Eigen::Vector3d u, ///< norm of point
-  Eigen::Vector3d &p ///< result
+  const TrianglePlaneData& plane, 
+  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3d>&  u, ///< norm of point
+  Eigen::Ref<Eigen::Vector3d> p ///< result
   )
 {
   auto n = plane.normal;
@@ -34,9 +34,29 @@ bool calcLinePlaneIntersection(
   return true;
 }
 
+/**
+ p0, u: line
+ plane: plane
+ @see http://geomalgorithms.com/a05-_intersect-1.html
+*/
+double calcLinePlaneDistance(
+  const TrianglePlaneData& plane, 
+  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3d>&  u ///< norm of point
+  )
+{
+  auto n = plane.normal;
+  if(n.dot(u) == 0.0)
+  {
+    return false;
+  }
+  Eigen::Vector3d w = p0 - plane.points[0];
+  double s = -n.dot(w) / n.dot(u);
+  return s;
+}
 
 /// @see: http://blackpawn.com/texts/pointinpoly/default.html
-bool sameSide(Eigen::Vector3d p1,Eigen::Vector3d p2, Eigen::Vector3d a, Eigen::Vector3d b)
+bool sameSide(const Eigen::Ref<const Eigen::Vector3d>&  p1,const Eigen::Ref<const Eigen::Vector3d>& p2, const Eigen::Ref<const Eigen::Vector3d>& a, const Eigen::Ref<const Eigen::Vector3d>& b)
 {
   auto cp1 = (b-a).cross(p1-a);
   auto cp2 = (b-a).cross(p2-a);
@@ -45,7 +65,7 @@ bool sameSide(Eigen::Vector3d p1,Eigen::Vector3d p2, Eigen::Vector3d a, Eigen::V
   return false;
 }
 
-bool pointInTriangle(Eigen::Vector3d p, TrianglePlaneData plane)
+bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3d>& p, const TrianglePlaneData& plane)
 {
   
   auto a = plane.points[0];
@@ -77,7 +97,7 @@ bool pointInTriangle(Eigen::Vector3d p, TrianglePlaneData plane)
   return (u >= 0) && (v >= 0) && (u + v < 1);
 }
 
-Eigen::Vector3d orthogonalVector3d(Eigen::Vector3d n, Eigen::Vector3d v0, double theta)
+Eigen::Vector3d orthogonalVector3d(const Eigen::Ref<const Eigen::Vector3d>& n, const Eigen::Ref<const Eigen::Vector3d>& v0, double theta)
 {
   Eigen::Vector3d v;
   v.setZero();
@@ -87,7 +107,7 @@ Eigen::Vector3d orthogonalVector3d(Eigen::Vector3d n, Eigen::Vector3d v0, double
 }
 
 
-Eigen::Vector3d getOrthogonalVector(Eigen::Vector3d n)
+Eigen::Vector3d getOrthogonalVector(const Eigen::Ref<const Eigen::Vector3d>& n)
 {
   Eigen::Vector3d v;
 

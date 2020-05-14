@@ -36,7 +36,7 @@
 struct GraspData
 {
   std::vector<Eigen::Vector3d> points;
-  Eigen::Affine3d hand_transform;
+  Eigen::Isometry3d hand_transform;
   bool available {false};
   
   friend std::ostream & operator << (std::ostream &out, const GraspData &d)

@@ -9,6 +9,7 @@
 #include "fgpg/grasp_coverage_evaluator.h"
 #include "fgpg/yaml_config.h"
 #include "fgpg/vtk_mesh_utils.h"
+#include "fgpg/calc_area.h"
 
 std::string remove_extension(const std::string& filename) {
   size_t lastdot = filename.find_last_of(".");
@@ -91,7 +92,8 @@ int main(int argc, char** argv)
   gce.getNumberOfBin();
   double full_entropy = gce.getFullEntropy();
   double pos_entropy = gce.getPosEntropy();
-
+  double average_distance = gpg.getAverageDistance();
+  std::cout << "average distance: " << average_distance << std::endl;
   std::cout << "full_entropy: " << full_entropy << std::endl;
   std::cout << "pos_entropy: " << pos_entropy << std::endl;
 

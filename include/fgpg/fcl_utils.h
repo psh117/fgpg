@@ -58,7 +58,7 @@ using namespace pcl;
 struct FCLGripper
 {
   BoxPtr g[4];
-  Eigen::Affine3d t[4];
+  Eigen::Isometry3d t[4];
 
   /// d: depth of the gripper
   /// h: width of the gripper
@@ -114,7 +114,7 @@ struct FCLGripper
   }
   
   void drawGripper(pcl::visualization::PCLVisualizer & vis, 
-  const Eigen::Affine3d gripper_transform,
+  const Eigen::Isometry3d gripper_transform,
   const std::string &id,
    double r, double g_c, double b, double opacity,
   double dist = -1.0)
@@ -146,11 +146,105 @@ struct FCLGripper
       vis.setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, id_total_line, 0);
     }
   }
+
+  Eigen::Vector3d getPalmNormalVector(const Eigen::Isometry3d& transform) const
+  {
+    Eigen::Vector4d vec;
+    vec << 1, 0, 0, 0;
+    return (transform * vec).head<3>();
+  }
+  Eigen::Vector3d getPalmOrigin(const Eigen::Isometry3d& transform) const
+  {
+    Eigen::Vector4d vec;
+    vec << -d, 0, 0, 1;
+    return (transform * vec).head<3>();
+  }
+
+  /**
+   * @brief Get the Finger1 Plane Points object
+   * 
+   * @param transform 
+   * @return Eigen::Matrix<double, 3, 5> 0~3: points represent the rectangle, 4: normal vector
+   */
+  Eigen::Matrix<double, 3, 5> getFinger1PlanePoints(const Eigen::Isometry3d & transform) const
+  {
+    Eigen::Matrix<double, 3, 5> points;
+    Eigen::Vector4d point;
+    Eigen::Vector4d trans_point;
+    Eigen::Matrix4d rectangle_points;
+    
+    rectangle_points << -d, -y1l/2, h, 1,
+                         l-d, -y1l/2, h, 1,
+                         -d, y1l/2, h, 1,
+                         l-d, y1l/2, h, 1;
+    
+    for (int i=0; i<4; i++)
+    {
+      trans_point = transform * rectangle_points.row(i).transpose();
+      points.col(i) = trans_point.head<3>();
+    }
+
+    Eigen::Vector3d normal_vector;
+    normal_vector << 0, 0, 1; // inversed
+    points.col(4) = transform.linear() * normal_vector;
+
+    return points; 
+  }
+
+  Eigen::Matrix<double, 3, 5> getFinger2PlanePoints(const Eigen::Isometry3d & transform) const
+  {
+    Eigen::Matrix<double, 3, 5> points;
+    Eigen::Vector4d point;
+    Eigen::Vector4d trans_point;
+    Eigen::Matrix4d rectangle_points;
+    
+    rectangle_points << -d, -y1l/2, -h, 1,
+                         l-d, -y1l/2, -h, 1,
+                         -d, y1l/2, -h, 1,
+                         l-d, y1l/2, -h, 1;
+    
+    for (int i=0; i<4; i++)
+    {
+      trans_point = transform * rectangle_points.row(i).transpose();
+      points.col(i) = trans_point.head<3>();
+    }
+
+    Eigen::Vector3d normal_vector;
+    normal_vector << 0, 0, -1; // inversed
+    points.col(4) = transform.linear() * normal_vector;
+
+    return points;
+  }
+
+  Eigen::Matrix<double, 3, 5> getPalmPlanePoints(const Eigen::Isometry3d & transform) const
+  {
+    Eigen::Matrix<double, 3, 5> points;
+    Eigen::Vector4d point;
+    Eigen::Vector4d trans_point;
+    Eigen::Matrix4d rectangle_points;
+    
+    rectangle_points << -d, -y1l/2, -h, 1,
+                         -d, -y1l/2, h, 1,
+                         -d, y1l/2, -h, 1,
+                         -d, y1l/2, h, 1;
+    
+    for (int i=0; i<4; i++)
+    {
+      trans_point = transform * rectangle_points.row(i).transpose();
+      points.col(i) = trans_point.head<3>();
+    }
+
+    Eigen::Vector3d normal_vector;
+    normal_vector << -1, 0, 0; // inversed
+    points.col(4) = transform.linear() * normal_vector;
+
+    return points;  
+  }
 };
 
 class CollisionCheck
 {
-  public:
+public:
   BVHMPtr mesh_model_;
   FCLGripper gripper_model_;
   
@@ -180,7 +274,7 @@ class CollisionCheck
     mesh_model_->endModel();
   }
 
-  bool isFeasible(Eigen::Affine3d gripper_transform, double distance)
+  bool isFeasible(Eigen::Isometry3d gripper_transform, double distance)
   {
     // set the collision request structure, here we just use the default setting
     fcl::CollisionRequest request;
@@ -195,7 +289,7 @@ class CollisionCheck
     bool is_collided = false;
     for (int i=0; i<4 ;++i)
     {
-      Eigen::Affine3d cur_transform = gripper_transform * gripper_model_.t[i];
+      Eigen::Isometry3d cur_transform = gripper_transform * gripper_model_.t[i];
       fcl::Transform3f fcl_transform;
       FCLEigenUtils::convertTransform(cur_transform, fcl_transform);
 

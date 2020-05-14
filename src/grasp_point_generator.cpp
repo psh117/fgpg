@@ -165,6 +165,59 @@ void GraspPointGenerator::display(pcl::PolygonMesh& mesh)
   }
 }
 
+void GraspPointGenerator::display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3d>& gripper_transforms, std::vector<double>& grasp_width)
+{
+  if(config_.display_figure)
+  {
+    pcl::visualization::PCLVisualizer vis1 ("Generated preliminary points");
+    vis1.addPointCloud<pcl::PointXYZRGBNormal> (candid_sample_cloud_);
+    vis1.addPolygonMesh(mesh, "meshes",0);
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, config_.mesh_color[0], config_.mesh_color[1], config_.mesh_color[2], "meshes");
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 3, "meshes");
+    vis1.setBackgroundColor (config_.background_color[0], config_.background_color[1], config_.background_color[2]);
+    vis1.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, config_.point_size);
+    vis1.addPointCloudNormals<pcl::PointXYZRGBNormal> (candid_sample_cloud_, 1, .01f,"cloud_normals");
+    if(config_.attach_coordination)
+      vis1.addCoordinateSystem(0.1);
+    vis1.setCameraPosition(config_.camera_position[0],config_.camera_position[1],config_.camera_position[2],config_.camera_position[3],config_.camera_position[4],config_.camera_position[5]);
+
+    vis1.spin ();
+
+    if(config_.display_hand)
+    {
+      pcl::visualization::PCLVisualizer vis2 ("Generated candidates");
+
+      vis2.addPointCloud<pcl::PointXYZRGBNormal> (candid_result_cloud);
+      vis2.addPolygonMesh(mesh, "meshes",0);
+      vis2.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 
+        config_.mesh_color[0], config_.mesh_color[1], config_.mesh_color[2], "meshes");
+      vis2.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 
+        3, "meshes");
+      vis2.setBackgroundColor(config_.background_color[0], config_.background_color[1], config_.background_color[2]);
+      vis2.setCameraPosition(config_.camera_position[0],config_.camera_position[1],config_.camera_position[2],config_.camera_position[3],config_.camera_position[4],config_.camera_position[5]);
+      
+      if(config_.attach_coordination)
+        vis2.addCoordinateSystem(0.1);
+
+      int id_num = 0;
+
+      for (int i=0; i<gripper_transforms.size(); i++)
+      {
+        if(grasp_width.size() > i)
+        {
+          collision_check_.gripper_model_.drawGripper(vis2, gripper_transforms[i], std::to_string(id_num++),config_.gripper_color[0],config_.gripper_color[1],config_.gripper_color[2], config_.gripper_opacity, 
+          grasp_width[i]/2);
+        }
+        else
+        {
+          collision_check_.gripper_model_.drawGripper(vis2, gripper_transforms[i], std::to_string(id_num++),config_.gripper_color[0],config_.gripper_color[1],config_.gripper_color[2], config_.gripper_opacity);
+        }
+      }
+      vis2.spin();
+    }
+  }
+}
+
 void GraspPointGenerator::displayOutline(pcl::PolygonMesh& mesh)
 {
   if(config_.display_figure)
@@ -247,6 +300,22 @@ void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
        << "      upper_bound:    " << grasp.bound.second.transpose().format(CommaInitFmt) <<  std::endl
        << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
   }
+}
+
+double GraspPointGenerator::getAverageDistance()
+{
+  std::vector<double> dists;
+  for(auto& grasp : grasp_cand_collision_free_)
+  {
+    // std::cout << "transform: " << std::endl << trans.matrix() << std::endl;
+    double dist = getGraspDistance(grasp.hand_transform, collision_check_.gripper_model_, planes_);
+    dists.push_back(dist);
+    std::cout << dist  << std::endl; 
+  }
+  double average = std::accumulate(dists.begin(), dists.end(), 0.0) / grasp_cand_collision_free_.size();
+  std::cout << "ave: " << average << std::endl;
+
+  return average;
 }
 
 void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData & plane)

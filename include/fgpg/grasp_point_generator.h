@@ -46,6 +46,7 @@
 #include "fgpg/fcl_utils.h"
 #include "fgpg/mesh_sampling.h"
 #include "fgpg/yaml_config.h"
+#include "fgpg/calc_area.h"
 
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Line;
 
@@ -69,9 +70,12 @@ public:
   void findGraspableOutline();
 
   void display(pcl::PolygonMesh& mesh);
+  void display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3d>& gripper_transforms, std::vector<double>& grasp_width);
   void displayOutline(pcl::PolygonMesh& mesh);
   void saveGraspCandidates(std::ofstream &of);
   void saveContGraspCandidates(std::ofstream &of);
+
+  double getAverageDistance();
 
 private:
   CollisionCheck collision_check_;

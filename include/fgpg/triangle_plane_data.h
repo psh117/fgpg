@@ -32,12 +32,93 @@
 #include <Eigen/Dense>
 #include <vector>
 
+#include "fgpg/grap_data.h"
+
+struct LineData
+{
+  Eigen::Vector3d approach_direction;
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> points;
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> limit_points;
+  std::vector<GraspData> sampled_grasp_data;
+  bool graspable {false};
+
+  Eigen::Vector3d center_dist;
+
+  void calcGraspable()
+  {
+    if(sampled_grasp_data.size() == 0)
+      return;
+    
+    Eigen::Vector3d a, p, g, p1, p2, pc;
+    g = sampled_grasp_data[0].hand_transform.translation();
+    
+    p2 = points.second;
+    p1 = points.first;
+
+    p = p2 - p1;
+    a = g - p1;
+
+    double dist = p.transpose() * a;
+    pc = p1 + dist * p.normalized();
+
+    center_dist = g - pc;
+
+    graspable = false;
+    bool first_find = false;
+
+    for (auto& grasp : sampled_grasp_data)
+    {
+      if(!first_find)
+      {
+        if(grasp.available)
+        {
+          first_find = true;
+          graspable = true;
+          limit_points.first = grasp.hand_transform.translation();
+          limit_points.second = grasp.hand_transform.translation();
+        }
+      }
+      else
+      {
+        if(grasp.available)
+        {
+          limit_points.second = grasp.hand_transform.translation();
+        }
+        else
+        {
+          return;
+        }
+      }
+    }
+  }
+};
+
+struct ContGraspPose
+{
+  Eigen::Vector3d approach_direction;
+  Eigen::Vector3d normal_direction;
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> bound;
+  double length;
+
+  Eigen::Vector3d normalizedDirection()
+  {
+    return (bound.second - bound.first).normalized();
+  }
+
+  void computeLength()
+  {
+    length = (bound.first-bound.second).norm();
+  }
+};
+
 struct TrianglePlaneData
 {
   Eigen::Vector3d normal;
-  std::vector < Eigen::Vector3d > points;
+  std::vector < Eigen::Vector3d > points {3};
   double area;
   Eigen::Vector3d incenter;
+
+  std::vector < LineData > line_data {3};
 
   friend std::ostream & operator << (std::ostream &out, const TrianglePlaneData &d)
   {

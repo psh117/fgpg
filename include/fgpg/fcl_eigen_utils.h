@@ -34,7 +34,7 @@
 namespace FCLEigenUtils
 {
 
-static void convertTransform(const fcl::Transform3f& fcl_input, Eigen::Affine3d & eigen_output)
+static void convertTransform(const fcl::Transform3f& fcl_input, Eigen::Isometry3d & eigen_output)
 {
   auto &trans = fcl_input.getTranslation();
   auto &rot = fcl_input.getRotation();
@@ -45,7 +45,7 @@ static void convertTransform(const fcl::Transform3f& fcl_input, Eigen::Affine3d 
   eigen_output.translation() << trans[0], trans[1], trans[2];
 }
 
-static void convertTransform(const Eigen::Affine3d &eigen_input, fcl::Transform3f &fcl_output)
+static void convertTransform(const Eigen::Isometry3d &eigen_input, fcl::Transform3f &fcl_output)
 {
   fcl::Matrix3f rotation;
   fcl::Vec3f translation;

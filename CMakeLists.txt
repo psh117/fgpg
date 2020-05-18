@@ -30,6 +30,9 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 add_library(${PROJECT_NAME}_lib
   src/mesh_sampling.cpp 
   src/grasp_point_generator.cpp
@@ -37,13 +40,20 @@ add_library(${PROJECT_NAME}_lib
   src/hsv2rgb.cpp
   src/grasp_coverage_evaluator.cpp
 )
+
 add_executable(${PROJECT_NAME} 
   src/fgpg.cpp 
 )
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 
 add_dependencies(${PROJECT_NAME}
+ ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+ ${catkin_EXPORTED_TARGETS}
+)
+
+add_executable(evaluator
+  src/evaluator.cpp
+)
+add_dependencies(evaluator
  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
  ${catkin_EXPORTED_TARGETS}
 )
@@ -60,6 +70,13 @@ target_link_libraries(${PROJECT_NAME}_lib
   yaml-cpp
 )
 target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  fcl
+  yaml-cpp
+  ${PROJECT_NAME}_lib
+)
+target_link_libraries(evaluator
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   fcl

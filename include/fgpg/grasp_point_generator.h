@@ -46,6 +46,7 @@
 #include "fgpg/fcl_utils.h"
 #include "fgpg/mesh_sampling.h"
 #include "fgpg/yaml_config.h"
+#include "fgpg/calc_area.h"
 
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Line;
 
@@ -65,8 +66,16 @@ public:
   void setConfig(const YAMLConfig &config);
   void setMesh(const std::vector <TrianglePlaneData> triangle_mesh);
   void generate();
+
+  void findGraspableOutline();
+
   void display(pcl::PolygonMesh& mesh);
+  void display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3d>& gripper_transforms, std::vector<double>& grasp_width);
+  void displayOutline(pcl::PolygonMesh& mesh);
   void saveGraspCandidates(std::ofstream &of);
+  void saveContGraspCandidates(std::ofstream &of);
+
+  double getAverageDistance();
 
 private:
   CollisionCheck collision_check_;
@@ -75,6 +84,9 @@ private:
   std::vector <GraspData> grasp_cand_collision_free_;
   std::vector <GraspData> grasp_cand_in_collision_;
 
+  std::vector <ContGraspPose> continuous_grasp_pose_;
+  std::vector <ContGraspPose> continuous_grasp_pose_simplified_;
+
   std::vector <TrianglePlaneData> planes_;
 
   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr candid_sample_cloud_ {new pcl::PointCloud<pcl::PointXYZRGBNormal>};
@@ -82,12 +94,15 @@ private:
 
   YAMLConfig config_;
 
-  void samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector);
-  void makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector);
-  void samplePointsInTriangle(TrianglePlaneData plane);
+  void samplePointsInTriangle(TrianglePlaneData & plane);
+  void samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector, LineData & line_data);
+  // void makePair
+  void makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector, LineData & line_data);
 
   void sample();
   void analyticSample ();
   void randomSample ();
   void collisionCheck();
+  void collisionCheck(GraspData &grasp);
+  void simplifyContGraspCandidates();
 };

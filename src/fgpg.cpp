@@ -9,10 +9,24 @@
 #include "fgpg/grasp_coverage_evaluator.h"
 #include "fgpg/yaml_config.h"
 #include "fgpg/vtk_mesh_utils.h"
+#include "fgpg/calc_area.h"
+
+std::string remove_extension(const std::string& filename) {
+  size_t lastdot = filename.find_last_of(".");
+  if (lastdot == std::string::npos) return filename;
+    return filename.substr(0, lastdot); 
+}
 
 int main(int argc, char** argv)
 {
+  bool use_custom_output_name = false;
+  std::string custom_output_name;
   if (argc<3) return -1;
+  if (argc == 4) 
+  {
+    use_custom_output_name = true;
+    custom_output_name = std::string(argv[3]);
+  }
 
   YAMLConfig config;
   try
@@ -40,10 +54,27 @@ int main(int argc, char** argv)
   gpg.setConfig(config);
   gpg.setMesh(triangles);
   gpg.generate();
+  gpg.findGraspableOutline();
   gpg.display(mesh);
+  gpg.displayOutline(mesh);
 
-  std::ofstream of(file_name + config.output_file_suffix);
+  std::string obj_name;
+  if (use_custom_output_name)
+  {
+    obj_name = custom_output_name;
+  }
+  else
+  {
+    obj_name = remove_extension(file_name);
+  }
+  std::string of_name = obj_name + config.output_file_suffix;
+  std::string of_cont_name = obj_name + "_cont"+ config.output_file_suffix;
+
+  std::ofstream of(of_name);
   gpg.saveGraspCandidates(of);
+
+  std::ofstream of_cont(of_cont_name);
+  gpg.saveContGraspCandidates(of_cont);
 
   GraspCoverageEvaluator gce;
 
@@ -61,7 +92,8 @@ int main(int argc, char** argv)
   gce.getNumberOfBin();
   double full_entropy = gce.getFullEntropy();
   double pos_entropy = gce.getPosEntropy();
-
+  double average_distance = gpg.getAverageDistance();
+  std::cout << "average distance: " << average_distance << std::endl;
   std::cout << "full_entropy: " << full_entropy << std::endl;
   std::cout << "pos_entropy: " << pos_entropy << std::endl;
 

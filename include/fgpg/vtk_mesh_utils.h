@@ -81,10 +81,12 @@ static std::vector<TrianglePlaneData> buildTriangleData(pcl::PolygonMesh & mesh)
     Eigen::Vector3d v2 = Eigen::Vector3d (p2[0], p2[1], p2[2]) - Eigen::Vector3d (p3[0], p3[1], p3[2]);
     Eigen::Vector3d n = v1.cross (v2);
     n.normalize ();
+    // std::cout << "n: " << n.transpose() << std::endl;
 
-    plane_data.points.push_back(Eigen::Map<const Eigen::Vector3d>(p1));
-    plane_data.points.push_back(Eigen::Map<const Eigen::Vector3d>(p2));
-    plane_data.points.push_back(Eigen::Map<const Eigen::Vector3d>(p3));
+    plane_data.points.resize(3);
+    plane_data.points[0] = (Eigen::Map<const Eigen::Vector3d>(p1));
+    plane_data.points[1] = (Eigen::Map<const Eigen::Vector3d>(p2));
+    plane_data.points[2] = (Eigen::Map<const Eigen::Vector3d>(p3));
     plane_data.normal = n;
 
     triangles.push_back(plane_data);

@@ -98,10 +98,16 @@ struct ContGraspPose
   Eigen::Vector3d approach_direction;
   Eigen::Vector3d normal_direction;
   std::pair<Eigen::Vector3d, Eigen::Vector3d> bound;
+  double length;
 
   Eigen::Vector3d normalizedDirection()
   {
     return (bound.second - bound.first).normalized();
+  }
+
+  void computeLength()
+  {
+    length = (bound.first-bound.second).norm();
   }
 };
 

@@ -89,6 +89,7 @@ void GraspPointGenerator::findGraspableOutline()
         cgp.bound = line.limit_points;
         cgp.approach_direction = line.approach_direction;
         cgp.normal_direction = plane.normal;
+        cgp.computeLength();
         continuous_grasp_pose_.push_back(cgp);
       }
     }
@@ -288,7 +289,12 @@ void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
   of << "grasp_points: " << std::endl;
   Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "[", "]");
 
-  for(auto & grasp : continuous_grasp_pose_simplified_)
+  std::sort(continuous_grasp_pose_.begin(), continuous_grasp_pose_.end(), 
+  [](const ContGraspPose &a, const ContGraspPose &b)
+  {
+    return a.length > b.length;
+  });
+  for(auto & grasp : continuous_grasp_pose_)
   {
     Eigen::Matrix3d rot;
     rot.col(0) = grasp.normal_direction.cross(grasp.approach_direction);
@@ -298,7 +304,8 @@ void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
     Eigen::Quaterniond quat(rot);
     of << "    - lower_bound:    " << grasp.bound.first.transpose().format(CommaInitFmt) <<  std::endl
        << "      upper_bound:    " << grasp.bound.second.transpose().format(CommaInitFmt) <<  std::endl
-       << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
+       << "      orientation:    [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl
+       << "      distance:       " << (grasp.bound.first - grasp.bound.second).norm() << std::endl; 
   }
 }
 

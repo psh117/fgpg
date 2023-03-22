@@ -79,7 +79,7 @@ int main(int argc, char** argv)
   GraspCoverageEvaluator gce;
 
   const auto & grasp_cand = gpg.getGraspData();
-  std::vector<std::pair<Eigen::Vector3d,Eigen::Vector3d> > grasp_datas;
+  std::vector<std::pair<Eigen::Vector3f,Eigen::Vector3f> > grasp_datas;
   grasp_datas.reserve(grasp_cand.size());
   for(const auto & grasp : grasp_cand)
   {
@@ -90,9 +90,9 @@ int main(int argc, char** argv)
   gce.setLeafSize(config.leaf_size,config.num_orientation_leaf);
   gce.setGraspPoints(grasp_datas);
   gce.getNumberOfBin();
-  double full_entropy = gce.getFullEntropy();
-  double pos_entropy = gce.getPosEntropy();
-  double average_distance = gpg.getAverageDistance();
+  float full_entropy = gce.getFullEntropy();
+  float pos_entropy = gce.getPosEntropy();
+  float average_distance = gpg.getAverageDistance();
   std::cout << "average distance: " << average_distance << std::endl;
   std::cout << "full_entropy: " << full_entropy << std::endl;
   std::cout << "pos_entropy: " << pos_entropy << std::endl;

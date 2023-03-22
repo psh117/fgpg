@@ -42,21 +42,21 @@
 */
 bool calcLinePlaneIntersection(
   const TrianglePlaneData& plane, 
-  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
-  const Eigen::Ref<const Eigen::Vector3d>&  u, ///< norm of point
-  Eigen::Ref<Eigen::Vector3d>  p ///< result
+  const Eigen::Ref<const Eigen::Vector3f>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3f>&  u, ///< norm of point
+  Eigen::Ref<Eigen::Vector3f>  p ///< result
   );
 
-double calcLinePlaneDistance(
+float calcLinePlaneDistance(
   const TrianglePlaneData& plane, 
-  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
-  const Eigen::Ref<const Eigen::Vector3d>&  u ///< norm of point
+  const Eigen::Ref<const Eigen::Vector3f>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3f>&  u ///< norm of point
   );
 
 /// @see: http://blackpawn.com/texts/pointinpoly/default.html
-bool sameSide(const Eigen::Ref<const Eigen::Vector3d>& p1,const Eigen::Ref<const Eigen::Vector3d>& p2, const Eigen::Ref<const Eigen::Vector3d>& a, const Eigen::Ref<const Eigen::Vector3d>& b);
+bool sameSide(const Eigen::Ref<const Eigen::Vector3f>& p1,const Eigen::Ref<const Eigen::Vector3f>& p2, const Eigen::Ref<const Eigen::Vector3f>& a, const Eigen::Ref<const Eigen::Vector3f>& b);
 
-bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3d>& p, const TrianglePlaneData& plane);
+bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3f>& p, const TrianglePlaneData& plane);
 
-Eigen::Vector3d orthogonalVector3d(const Eigen::Ref<const Eigen::Vector3d>&  n, const Eigen::Ref<const Eigen::Vector3d>&  v0, double theta);
-Eigen::Vector3d getOrthogonalVector(const Eigen::Ref<const Eigen::Vector3d>&  n);
+Eigen::Vector3f orthogonalVector3f(const Eigen::Ref<const Eigen::Vector3f>&  n, const Eigen::Ref<const Eigen::Vector3f>&  v0, float theta);
+Eigen::Vector3f getOrthogonalVector(const Eigen::Ref<const Eigen::Vector3f>&  n);

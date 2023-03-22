@@ -38,29 +38,29 @@ struct YAMLConfig
     yamlnode = YAML::LoadFile(file_name);
     point_generation_method = yamlnode["point_generation_method"].as<std::string>();
 
-    gripper_params = yamlnode["gripper_params"].as<std::vector<double> >();
-    gripper_depth_epsilon = yamlnode["gripper_depth_epsilon"].as<double> ();
+    gripper_params = yamlnode["gripper_params"].as<std::vector<float> >();
+    gripper_depth_epsilon = yamlnode["gripper_depth_epsilon"].as<float> ();
 
-    point_distance = yamlnode["point_distance"].as<double> ();
+    point_distance = yamlnode["point_distance"].as<float> ();
     random_point_num = yamlnode["random_point_num"].as<int>();
 
     remove_same_pose = yamlnode["remove_same_pose"].as<bool>();
-    same_dist = yamlnode["same_dist"].as<double>();
-    same_angle = yamlnode["same_angle"].as<double>();
+    same_dist = yamlnode["same_dist"].as<float>();
+    same_angle = yamlnode["same_angle"].as<float>();
 
     output_file_suffix = yamlnode["output_file_suffix"].as<std::string>();
 
-    camera_position = yamlnode["camera_position"].as<std::vector<double> >();
+    camera_position = yamlnode["camera_position"].as<std::vector<float> >();
 
     // Visualization
     attach_coordination = yamlnode["attach_coordination"].as<bool>();
-    background_color = yamlnode["background_color"].as<std::vector<double> >();
-    mesh_color = yamlnode["mesh_color"].as<std::vector<double> >();
-    point_color = yamlnode["point_color"].as<std::vector<double> >();
-    gripper_color = yamlnode["gripper_color"].as<std::vector<double> >();
+    background_color = yamlnode["background_color"].as<std::vector<float> >();
+    mesh_color = yamlnode["mesh_color"].as<std::vector<float> >();
+    point_color = yamlnode["point_color"].as<std::vector<float> >();
+    gripper_color = yamlnode["gripper_color"].as<std::vector<float> >();
 
-    gripper_opacity = yamlnode["gripper_opacity"].as<double> ();
-    point_opacity = yamlnode["point_opacity"].as<double> ();
+    gripper_opacity = yamlnode["gripper_opacity"].as<float> ();
+    point_opacity = yamlnode["point_opacity"].as<float> ();
 
     point_size = yamlnode["point_size"].as<int> ();
 
@@ -69,35 +69,35 @@ struct YAMLConfig
     display_collision = yamlnode["display_collision"].as<bool>();
     display_preliminary_points = yamlnode["display_preliminary_points"].as<bool>();
 
-    leaf_size = yamlnode["leaf_size"].as<double> ();
+    leaf_size = yamlnode["leaf_size"].as<float> ();
     num_orientation_leaf = yamlnode["num_orientation_leaf"].as<int> ();
   }
 
   std::string point_generation_method;
 
-  std::vector<double> gripper_params;
-  double gripper_depth_epsilon;
+  std::vector<float> gripper_params;
+  float gripper_depth_epsilon;
 
-  double point_distance;
+  float point_distance;
   int random_point_num;
 
   bool remove_same_pose;
-  double same_dist;
-  double same_angle;
+  float same_dist;
+  float same_angle;
 
   std::string output_file_suffix;
 
-  std::vector<double> camera_position;
+  std::vector<float> camera_position;
 
   // Visualization
   bool attach_coordination;
-  std::vector<double> background_color;
-  std::vector<double> mesh_color;
-  std::vector<double> point_color;
-  std::vector<double> gripper_color;
+  std::vector<float> background_color;
+  std::vector<float> mesh_color;
+  std::vector<float> point_color;
+  std::vector<float> gripper_color;
 
-  double gripper_opacity;
-  double point_opacity;
+  float gripper_opacity;
+  float point_opacity;
 
   int point_size;
 
@@ -106,6 +106,6 @@ struct YAMLConfig
   bool display_collision;
   bool display_preliminary_points;
 
-  double leaf_size;
+  float leaf_size;
   int num_orientation_leaf;
 };

@@ -1,25 +1,25 @@
 
 #include "fgpg/grasp_point_generator.h"
 
-Eigen::Vector3d GraspPointGenerator::PCL2eigen(const PointT &pcl)
+Eigen::Vector3f GraspPointGenerator::PCL2eigen(const PointT &pcl)
 {
-  Eigen::Vector3d eig;
+  Eigen::Vector3f eig;
   eig(0) = pcl.x;
   eig(1) = pcl.y;
   eig(2) = pcl.z;
   return eig;
 }
 
-Eigen::Vector3d GraspPointGenerator::PCLNormal2eigen(const PointT &pcl)
+Eigen::Vector3f GraspPointGenerator::PCLNormal2eigen(const PointT &pcl)
 {
-  Eigen::Vector3d eig;
+  Eigen::Vector3f eig;
   eig(0) = pcl.normal_x;
   eig(1) = pcl.normal_y;
   eig(2) = pcl.normal_z;
   return eig;
 }
 
-void GraspPointGenerator::eigen2PCL(const Eigen::Vector3d &eig, PointT &pcl, int r, int g, int b)
+void GraspPointGenerator::eigen2PCL(const Eigen::Vector3f &eig, PointT &pcl, int r, int g, int b)
 {
   pcl.x = eig(0);
   pcl.y = eig(1);
@@ -29,7 +29,7 @@ void GraspPointGenerator::eigen2PCL(const Eigen::Vector3d &eig, PointT &pcl, int
   pcl.b = b;
 }
 
-void GraspPointGenerator::eigen2PCL(const Eigen::Vector3d &eig, const Eigen::Vector3d &norm, PointT &pcl, int r, int g, int b)
+void GraspPointGenerator::eigen2PCL(const Eigen::Vector3f &eig, const Eigen::Vector3f &norm, PointT &pcl, int r, int g, int b)
 {
   pcl.x = eig(0);
   pcl.y = eig(1);
@@ -166,7 +166,7 @@ void GraspPointGenerator::display(pcl::PolygonMesh& mesh)
   }
 }
 
-void GraspPointGenerator::display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3d>& gripper_transforms, std::vector<double>& grasp_width)
+void GraspPointGenerator::display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3f>& gripper_transforms, std::vector<float>& grasp_width)
 {
   if(config_.display_figure)
   {
@@ -270,15 +270,15 @@ void GraspPointGenerator::saveGraspCandidates(std::ofstream &of)
 
   for(auto & grasp : grasp_cand_collision_free_)
   {
-    Eigen::Matrix3d new_rot; // Z<-X, Y <-Z
+    Eigen::Matrix3f new_rot; // Z<-X, Y <-Z
     new_rot.col(0) = grasp.hand_transform.linear().col(1);
     new_rot.col(1) = grasp.hand_transform.linear().col(2);
     new_rot.col(2) = grasp.hand_transform.linear().col(0);
 
-    Eigen::Quaterniond quat(new_rot);
+    Eigen::Quaternionf quat(new_rot);
     of << "    - [" << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  
               ", [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]]" << std::endl; 
-    // Eigen::Quaterniond quat(new_rot);
+    // Eigen::Quaternionf quat(new_rot);
     // of << "    - position:    " << grasp.hand_transform.translation().transpose().format(CommaInitFmt) <<  std::endl
     //    << "      orientation: [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl; 
   }
@@ -296,12 +296,12 @@ void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
   });
   for(auto & grasp : continuous_grasp_pose_)
   {
-    Eigen::Matrix3d rot;
+    Eigen::Matrix3f rot;
     rot.col(0) = grasp.normal_direction.cross(grasp.approach_direction);
     rot.col(1) = grasp.normal_direction;
     rot.col(2) = grasp.approach_direction;
 
-    Eigen::Quaterniond quat(rot);
+    Eigen::Quaternionf quat(rot);
     of << "    - lower_bound:    " << grasp.bound.first.transpose().format(CommaInitFmt) <<  std::endl
        << "      upper_bound:    " << grasp.bound.second.transpose().format(CommaInitFmt) <<  std::endl
        << "      orientation:    [" << quat.x() << ", " << quat.y() <<", " << quat.z() << ", " << quat.w() << "]" << std::endl
@@ -309,17 +309,17 @@ void GraspPointGenerator::saveContGraspCandidates(std::ofstream &of)
   }
 }
 
-double GraspPointGenerator::getAverageDistance()
+float GraspPointGenerator::getAverageDistance()
 {
-  std::vector<double> dists;
+  std::vector<float> dists;
   for(auto& grasp : grasp_cand_collision_free_)
   {
     // std::cout << "transform: " << std::endl << trans.matrix() << std::endl;
-    double dist = getGraspDistance(grasp.hand_transform, collision_check_.gripper_model_, planes_);
+    float dist = getGraspDistance(grasp.hand_transform, collision_check_.gripper_model_, planes_);
     dists.push_back(dist);
     std::cout << dist  << std::endl; 
   }
-  double average = std::accumulate(dists.begin(), dists.end(), 0.0) / grasp_cand_collision_free_.size();
+  float average = std::accumulate(dists.begin(), dists.end(), 0.0) / grasp_cand_collision_free_.size();
   std::cout << "ave: " << average << std::endl;
 
   return average;
@@ -345,15 +345,15 @@ void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData & plane)
 
   for(int i=0; i<3; i++)
   {
-    Eigen::Vector3d e = lines[i].first - lines[i].second;
-    Eigen::Vector3d c = (n.cross(e)).normalized();
+    Eigen::Vector3f e = lines[i].first - lines[i].second;
+    Eigen::Vector3f c = (n.cross(e)).normalized();
     
     // std::cout << "LINES" << std::endl;
     // std::cout << e.transpose() << std::endl;
     // std::cout << c.transpose() << std::endl;
     // std::cout << n.transpose() << std::endl;
-    Eigen::Vector3d new_p1, new_p2;
-    double grasp_length = config_.gripper_params[0] - config_.gripper_depth_epsilon;
+    Eigen::Vector3f new_p1, new_p2;
+    float grasp_length = config_.gripper_params[0] - config_.gripper_depth_epsilon;
     new_p1 = lines[i].first + c * grasp_length;
     new_p2 = lines[i].second + c * grasp_length;
 
@@ -364,27 +364,27 @@ void GraspPointGenerator::samplePointsInTriangle(TrianglePlaneData & plane)
   }
 }
 
-void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector, LineData & line_data)
+void GraspPointGenerator::samplePointsInLine(const Eigen::Vector3f &norm, Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f direction_vector, LineData & line_data)
 {
-  Eigen::Vector3d u = p2 - p1; // e
-  double len = u.norm(); // ||e||
-  // double point_len = len - config_.point_distance;
-  double point_len = len;
+  Eigen::Vector3f u = p2 - p1; // e
+  float len = u.norm(); // ||e||
+  // float point_len = len - config_.point_distance;
+  float point_len = len;
   int point_n = round(point_len / config_.point_distance);
-  double real_point_dist = point_len / point_n;
+  float real_point_dist = point_len / point_n;
 
-  Eigen::Vector3d u_norm = u.normalized();
+  Eigen::Vector3f u_norm = u.normalized();
 
   for(int i=0; i<point_n+1; i++)
   {
-    Eigen::Vector3d new_p;
+    Eigen::Vector3f new_p;
     new_p = p1 + u_norm * (i * real_point_dist);
     // new_p = p1 + u_norm * (config_.point_distance/2 + i * real_point_dist);
     makePair(norm,new_p,direction_vector, line_data);
   }
 }
 
-void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector, LineData & line_data)
+void GraspPointGenerator::makePair(const Eigen::Vector3f &norm, Eigen::Vector3f new_p, Eigen::Vector3f direction_vector, LineData & line_data)
 {
   static int h = 0;
   PointT pcl_point_1;
@@ -393,7 +393,7 @@ void GraspPointGenerator::makePair(const Eigen::Vector3d &norm, Eigen::Vector3d 
     auto & n = plane.normal;
     if ((norm+n).norm() < 6e-1) // opposit dir tolerance
     {
-      Eigen::Vector3d result_p;
+      Eigen::Vector3f result_p;
       calcLinePlaneIntersection(plane, new_p, -norm, result_p);
 
       if (!pointInTriangle(result_p, plane))
@@ -451,11 +451,11 @@ void GraspPointGenerator::analyticSample ()
 void GraspPointGenerator::randomSample ()
 {
   std::default_random_engine generator;
-  std::uniform_real_distribution<double> orientation_distribution(0.0,M_PI);
-  std::uniform_real_distribution<double> mesh_distribution(0.0,1.0);
+  std::uniform_real_distribution<float> orientation_distribution(0.0,M_PI);
+  std::uniform_real_distribution<float> mesh_distribution(0.0,1.0);
 
-  double totalArea = 0;
-  std::vector<double> cumulativeAreas (planes_.size(), 0);
+  float totalArea = 0;
+  std::vector<float> cumulativeAreas (planes_.size(), 0);
   for (int i=0; i<planes_.size(); i++)
   {
     totalArea += planes_[i].area;
@@ -468,15 +468,15 @@ void GraspPointGenerator::randomSample ()
 
   for (std::size_t i = 0; i < config_.random_point_num; i++)
   {
-    Eigen::Vector3d p;
-    Eigen::Vector3d n (0, 0, 0);
-    double r = mesh_distribution(generator) * totalArea;
-    double r1 = mesh_distribution(generator);
-    double r2 = mesh_distribution(generator);
+    Eigen::Vector3f p;
+    Eigen::Vector3f n (0, 0, 0);
+    float r = mesh_distribution(generator) * totalArea;
+    float r1 = mesh_distribution(generator);
+    float r2 = mesh_distribution(generator);
     randPSurface (planes_, cumulativeAreas, totalArea, p, n, r, r1, r2);
-    double theta = orientation_distribution(generator);
-    Eigen::Vector3d orth = getOrthogonalVector(n);
-    Eigen::Vector3d dir = orthogonalVector3d(n, orth, theta);
+    float theta = orientation_distribution(generator);
+    Eigen::Vector3f orth = getOrthogonalVector(n);
+    Eigen::Vector3f dir = orthogonalVector3f(n, orth, theta);
 
     if(dir.norm() > 1.01 || dir.norm() < 0.99)
     {

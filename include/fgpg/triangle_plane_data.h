@@ -36,20 +36,20 @@
 
 struct LineData
 {
-  Eigen::Vector3d approach_direction;
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> points;
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> limit_points;
+  Eigen::Vector3f approach_direction;
+  std::pair<Eigen::Vector3f, Eigen::Vector3f> points;
+  std::pair<Eigen::Vector3f, Eigen::Vector3f> limit_points;
   std::vector<GraspData> sampled_grasp_data;
   bool graspable {false};
 
-  Eigen::Vector3d center_dist;
+  Eigen::Vector3f center_dist;
 
   void calcGraspable()
   {
     if(sampled_grasp_data.size() == 0)
       return;
     
-    Eigen::Vector3d a, p, g, p1, p2, pc;
+    Eigen::Vector3f a, p, g, p1, p2, pc;
     g = sampled_grasp_data[0].hand_transform.translation();
     
     p2 = points.second;
@@ -58,7 +58,7 @@ struct LineData
     p = p2 - p1;
     a = g - p1;
 
-    double dist = p.transpose() * a;
+    float dist = p.transpose() * a;
     pc = p1 + dist * p.normalized();
 
     center_dist = g - pc;
@@ -95,12 +95,12 @@ struct LineData
 
 struct ContGraspPose
 {
-  Eigen::Vector3d approach_direction;
-  Eigen::Vector3d normal_direction;
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> bound;
-  double length;
+  Eigen::Vector3f approach_direction;
+  Eigen::Vector3f normal_direction;
+  std::pair<Eigen::Vector3f, Eigen::Vector3f> bound;
+  float length;
 
-  Eigen::Vector3d normalizedDirection()
+  Eigen::Vector3f normalizedDirection()
   {
     return (bound.second - bound.first).normalized();
   }
@@ -113,10 +113,10 @@ struct ContGraspPose
 
 struct TrianglePlaneData
 {
-  Eigen::Vector3d normal;
-  std::vector < Eigen::Vector3d > points {3};
-  double area;
-  Eigen::Vector3d incenter;
+  Eigen::Vector3f normal;
+  std::vector < Eigen::Vector3f > points {3};
+  float area;
+  Eigen::Vector3f incenter;
 
   std::vector < LineData > line_data {3};
 
@@ -141,18 +141,18 @@ struct TrianglePlaneData
     auto &p2 = points[1];
     auto &p3 = points[2];
 
-    double a = (p1 - p2).norm();
-    double b = (p1 - p3).norm();
-    double c = (p3 - p2).norm();
+    float a = (p1 - p2).norm();
+    float b = (p1 - p3).norm();
+    float c = (p3 - p2).norm();
 
-    double r = a + b + c;
+    float r = a + b + c;
 
     for(int i=0; i<3; ++i)
     {
       incenter(i) = (a*p3(i) + b*p2(i) + c*p1(i)) / r;
     }
   }
-  void calculateSmallTriangle(double len)
+  void calculateSmallTriangle(float len)
   {
     calculateIncenter();
   }

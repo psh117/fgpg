@@ -12,9 +12,9 @@
 */
 bool calcLinePlaneIntersection(
   const TrianglePlaneData& plane, 
-  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
-  const Eigen::Ref<const Eigen::Vector3d>&  u, ///< norm of point
-  Eigen::Ref<Eigen::Vector3d> p ///< result
+  const Eigen::Ref<const Eigen::Vector3f>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3f>&  u, ///< norm of point
+  Eigen::Ref<Eigen::Vector3f> p ///< result
   )
 {
   auto n = plane.normal;
@@ -22,8 +22,8 @@ bool calcLinePlaneIntersection(
   {
     return false;
   }
-  Eigen::Vector3d w = p0 - plane.points[0];
-  double s = -n.dot(w) / n.dot(u);
+  Eigen::Vector3f w = p0 - plane.points[0];
+  float s = -n.dot(w) / n.dot(u);
 
   // inverse direction
   if(s<0)
@@ -39,10 +39,10 @@ bool calcLinePlaneIntersection(
  plane: plane
  @see http://geomalgorithms.com/a05-_intersect-1.html
 */
-double calcLinePlaneDistance(
+float calcLinePlaneDistance(
   const TrianglePlaneData& plane, 
-  const Eigen::Ref<const Eigen::Vector3d>&  p0, 
-  const Eigen::Ref<const Eigen::Vector3d>&  u ///< norm of point
+  const Eigen::Ref<const Eigen::Vector3f>&  p0, 
+  const Eigen::Ref<const Eigen::Vector3f>&  u ///< norm of point
   )
 {
   auto n = plane.normal;
@@ -50,13 +50,13 @@ double calcLinePlaneDistance(
   {
     return false;
   }
-  Eigen::Vector3d w = p0 - plane.points[0];
-  double s = -n.dot(w) / n.dot(u);
+  Eigen::Vector3f w = p0 - plane.points[0];
+  float s = -n.dot(w) / n.dot(u);
   return s;
 }
 
 /// @see: http://blackpawn.com/texts/pointinpoly/default.html
-bool sameSide(const Eigen::Ref<const Eigen::Vector3d>&  p1,const Eigen::Ref<const Eigen::Vector3d>& p2, const Eigen::Ref<const Eigen::Vector3d>& a, const Eigen::Ref<const Eigen::Vector3d>& b)
+bool sameSide(const Eigen::Ref<const Eigen::Vector3f>&  p1,const Eigen::Ref<const Eigen::Vector3f>& p2, const Eigen::Ref<const Eigen::Vector3f>& a, const Eigen::Ref<const Eigen::Vector3f>& b)
 {
   auto cp1 = (b-a).cross(p1-a);
   auto cp2 = (b-a).cross(p2-a);
@@ -65,7 +65,7 @@ bool sameSide(const Eigen::Ref<const Eigen::Vector3d>&  p1,const Eigen::Ref<cons
   return false;
 }
 
-bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3d>& p, const TrianglePlaneData& plane)
+bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3f>& p, const TrianglePlaneData& plane)
 {
   
   auto a = plane.points[0];
@@ -82,38 +82,38 @@ bool pointInTriangle(const Eigen::Ref<const Eigen::Vector3d>& p, const TriangleP
   auto v2 = p - a;
 
   // Compute dot products
-  double dot00 = v0.dot(v0);
-  double dot01 = v0.dot(v1);
-  double dot02 = v0.dot(v2);
-  double dot11 = v1.dot(v1);
-  double dot12 = v1.dot(v2);
+  float dot00 = v0.dot(v0);
+  float dot01 = v0.dot(v1);
+  float dot02 = v0.dot(v2);
+  float dot11 = v1.dot(v1);
+  float dot12 = v1.dot(v2);
 
   // Compute barycentric coordinates
-  double inv_denom = 1 / (dot00 * dot11 - dot01 * dot01);
-  double u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
-  double v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+  float inv_denom = 1 / (dot00 * dot11 - dot01 * dot01);
+  float u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
+  float v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
 
   // Check if point is in triangle
   return (u >= 0) && (v >= 0) && (u + v < 1);
 }
 
-Eigen::Vector3d orthogonalVector3d(const Eigen::Ref<const Eigen::Vector3d>& n, const Eigen::Ref<const Eigen::Vector3d>& v0, double theta)
+Eigen::Vector3f orthogonalVector3f(const Eigen::Ref<const Eigen::Vector3f>& n, const Eigen::Ref<const Eigen::Vector3f>& v0, float theta)
 {
-  Eigen::Vector3d v;
+  Eigen::Vector3f v;
   v.setZero();
 
-  v = Eigen::AngleAxisd(theta, n).matrix() * v0;
+  v = Eigen::AngleAxisf(theta, n).matrix() * v0;
   return v;
 }
 
 
-Eigen::Vector3d getOrthogonalVector(const Eigen::Ref<const Eigen::Vector3d>& n)
+Eigen::Vector3f getOrthogonalVector(const Eigen::Ref<const Eigen::Vector3f>& n)
 {
-  Eigen::Vector3d v;
+  Eigen::Vector3f v;
 
   int max_index = 0;
   int new_index[3];
-  double max = 0;
+  float max = 0;
   for(int i=0; i<3; i++)
   {
     if(abs(n(i)) > max)

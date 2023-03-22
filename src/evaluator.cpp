@@ -10,7 +10,7 @@
 #include "fgpg/vtk_mesh_utils.h"
 #include "fgpg/calc_area.h"
 
-void readVector(ifstream &stream, Eigen::Vector3d & vec)
+void readVector(ifstream &stream, Eigen::Vector3f & vec)
 {
   char g;
   stream >> vec(0) >> g >> vec(1)  >> g >> vec(2) >> g ;
@@ -41,13 +41,13 @@ int main(int argc, char** argv)
   std::ifstream result_file(result_file_name);
   std::cout << file_name <<std::endl;
 
-  std::vector<std::pair<Eigen::Vector3d,Eigen::Vector3d> > grasp_data;
-  std::vector<Eigen::Isometry3d> grasp_transforms;
-  std::vector<double> grasp_widths;
+  std::vector<std::pair<Eigen::Vector3f,Eigen::Vector3f> > grasp_data;
+  std::vector<Eigen::Isometry3f> grasp_transforms;
+  std::vector<float> grasp_widths;
   while (result_file)
   {
-    Eigen::Vector3d grasp_bottom, grasp_surface, axis, approach, binormal;
-    double grasp_width;
+    Eigen::Vector3f grasp_bottom, grasp_surface, axis, approach, binormal;
+    float grasp_width;
     readVector(result_file, grasp_bottom);
     readVector(result_file, grasp_surface);
     readVector(result_file, axis);
@@ -56,11 +56,11 @@ int main(int argc, char** argv)
     result_file >> grasp_width;
     grasp_data.push_back(std::make_pair(grasp_bottom,approach));
 
-    Eigen::Isometry3d grasp_transform;
+    Eigen::Isometry3f grasp_transform;
     grasp_transform.linear().col(0) = axis;
     grasp_transform.linear().col(1) = approach;
     grasp_transform.linear().col(2) = binormal;
-    grasp_transform.linear() = grasp_transform.linear() * Eigen::AngleAxisd(90./180.*M_PI, Eigen::Vector3d::UnitZ());
+    grasp_transform.linear() = grasp_transform.linear() * Eigen::AngleAxisf(90./180.*M_PI, Eigen::Vector3f::UnitZ());
     grasp_transform.translation() = grasp_bottom;
     grasp_transforms.push_back(grasp_transform);
 
@@ -80,15 +80,15 @@ int main(int argc, char** argv)
   pcl::io::loadPolygonFile(file_name, mesh);
   std::vector<TrianglePlaneData> triangles = buildTriangleData(mesh);
 
-  std::vector<double> dists;
+  std::vector<float> dists;
   for(auto& trans : grasp_transforms)
   {
     std::cout << "transform: " << std::endl << trans.matrix() << std::endl;
-    double dist = getGraspDistance(trans, gripper_model, triangles);
+    float dist = getGraspDistance(trans, gripper_model, triangles);
     dists.push_back(dist);
     std::cout << dist  << std::endl; 
   }
-  double average = std::accumulate(dists.begin(), dists.end(), 0.0) / grasp_transforms.size();
+  float average = std::accumulate(dists.begin(), dists.end(), 0.0) / grasp_transforms.size();
   std::cout << "ave: " << average << std::endl;
 
   gce.setModel(triangles);
@@ -96,8 +96,8 @@ int main(int argc, char** argv)
   gce.setGraspPoints(grasp_data);
   gce.getNumberOfBin();
 
-  double full_entropy = gce.getFullEntropy();
-  double pos_entropy = gce.getPosEntropy();
+  float full_entropy = gce.getFullEntropy();
+  float pos_entropy = gce.getPosEntropy();
 
   std::cout << "full_entropy: " << full_entropy << std::endl;
   std::cout << "pos_entropy: " << pos_entropy << std::endl;

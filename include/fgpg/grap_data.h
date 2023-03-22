@@ -35,8 +35,8 @@
 
 struct GraspData
 {
-  std::vector<Eigen::Vector3d> points;
-  Eigen::Isometry3d hand_transform;
+  std::vector<Eigen::Vector3f> points;
+  Eigen::Isometry3f hand_transform;
   bool available {false};
   
   friend std::ostream & operator << (std::ostream &out, const GraspData &d)
@@ -50,22 +50,22 @@ struct GraspData
     
     return out;
   }
-  double getDist()
+  float getDist()
   {
     return (points[0] - points[1]).norm();
   }
-  bool isSame(const GraspData& data, double dist, double rad)
+  bool isSame(const GraspData& data, float dist, float rad)
   {
-    double d = (hand_transform.translation() - data.hand_transform.translation()).norm();
+    float d = (hand_transform.translation() - data.hand_transform.translation()).norm();
     if (d > dist)
     {
       return false;
     }
 
-    Eigen::Quaterniond q(hand_transform.linear());
-    Eigen::Quaterniond q2(data.hand_transform.linear());
+    Eigen::Quaternionf q(hand_transform.linear());
+    Eigen::Quaternionf q2(data.hand_transform.linear());
 
-    double ang = q.angularDistance(q2);
+    float ang = q.angularDistance(q2);
     if(ang > rad)
     {
       return false;

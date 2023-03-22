@@ -6,7 +6,7 @@ GraspCoverageEvaluator::GraspCoverageEvaluator() {}
 void GraspCoverageEvaluator::setModel(const std::vector<TrianglePlaneData> & mesh_data)
 {
   // Storage
-  std::vector<Eigen::Vector3d> mesh_points;
+  std::vector<Eigen::Vector3f> mesh_points;
   for (auto & triangle : mesh_data)
   {
     mesh_points.push_back(triangle.points[0]);
@@ -17,13 +17,13 @@ void GraspCoverageEvaluator::setModel(const std::vector<TrianglePlaneData> & mes
   setModel(mesh_points);
   // getMinMax3D();
 }
-void GraspCoverageEvaluator::setModel(const std::vector<Eigen::Vector3d> & mesh_points)
+void GraspCoverageEvaluator::setModel(const std::vector<Eigen::Vector3f> & mesh_points)
 {
   mesh_points_ = mesh_points;
   // getMinMax3D();
 }
 
-void GraspCoverageEvaluator::setGraspPoints(const std::vector<std::pair<Eigen::Vector3d,Eigen::Vector3d> > & grasp_data)
+void GraspCoverageEvaluator::setGraspPoints(const std::vector<std::pair<Eigen::Vector3f,Eigen::Vector3f> > & grasp_data)
 {
   grasp_data_ = grasp_data;
   total_num_points_ = grasp_data_.size();
@@ -31,14 +31,14 @@ void GraspCoverageEvaluator::setGraspPoints(const std::vector<std::pair<Eigen::V
 
 void GraspCoverageEvaluator::getMinMax3D()
 {
-  // Eigen::Vector3d min_p, max_p;
-  Eigen::Array3d min_p, max_p;
-  min_p.setConstant(std::numeric_limits<double>::max());
-  max_p.setConstant(std::numeric_limits<double>::min());
+  // Eigen::Vector3f min_p, max_p;
+  Eigen::Array3f min_p, max_p;
+  min_p.setConstant(std::numeric_limits<float>::max());
+  max_p.setConstant(std::numeric_limits<float>::min());
 
   for (const auto & point : mesh_points_)
   {
-    Eigen::Array3d array_point = point;
+    Eigen::Array3f array_point = point;
     min_p = min_p.min(array_point);
     max_p = max_p.max(array_point);
   }
@@ -84,16 +84,16 @@ void GraspCoverageEvaluator::getNumberOfBin()
   }
 }
 
-void GraspCoverageEvaluator::setLeafSize(double leaf_size, int orientation_size)
+void GraspCoverageEvaluator::setLeafSize(float leaf_size, int orientation_size)
 {
   leaf_size_ = leaf_size;
   inverse_leaf_size_ = 1 / leaf_size;
   orientation_size_ = orientation_size;
 }
 
-double GraspCoverageEvaluator::getFullEntropy()
+float GraspCoverageEvaluator::getFullEntropy()
 {
-  double entropy = 0;
+  float entropy = 0;
   for(int i=0; i<div_bin_(0); i++)
   {
     for(int j=0; j<div_bin_(1); j++)
@@ -108,7 +108,7 @@ double GraspCoverageEvaluator::getFullEntropy()
             {
               if(num_points_tensor_full_(i,j,k,l,n,m))
               {
-                double p = num_points_tensor_full_(i,j,k,l,n,m) / (double)total_num_points_;
+                float p = num_points_tensor_full_(i,j,k,l,n,m) / (float)total_num_points_;
                 entropy -= p * std::log(p);
               }
             }
@@ -120,9 +120,9 @@ double GraspCoverageEvaluator::getFullEntropy()
   return entropy;
 }
 
-double GraspCoverageEvaluator::getPosEntropy()
+float GraspCoverageEvaluator::getPosEntropy()
 {
-  double entropy = 0;
+  float entropy = 0;
   for(int i=0; i<div_bin_(0); i++)
   {
     for(int j=0; j<div_bin_(1); j++)
@@ -131,7 +131,7 @@ double GraspCoverageEvaluator::getPosEntropy()
       {
         if(num_points_tensor_pos_(i,j,k))
         {
-          double p = num_points_tensor_pos_(i,j,k) / (double)total_num_points_;
+          float p = num_points_tensor_pos_(i,j,k) / (float)total_num_points_;
           entropy -= p * std::log(p);
         }
       }

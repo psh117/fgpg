@@ -48,17 +48,17 @@
 #include "fgpg/yaml_config.h"
 #include "fgpg/calc_area.h"
 
-typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Line;
+typedef std::pair<Eigen::Vector3f, Eigen::Vector3f> Line;
 
 class GraspPointGenerator
 {
 public:
   // Static functions
-  static Eigen::Vector3d PCL2eigen(const PointT &pcl);
-  static Eigen::Vector3d PCLNormal2eigen(const PointT &pcl);
+  static Eigen::Vector3f PCL2eigen(const PointT &pcl);
+  static Eigen::Vector3f PCLNormal2eigen(const PointT &pcl);
 
-  static void eigen2PCL(const Eigen::Vector3d &eig, PointT &pcl, int r = 128, int g = 128, int b = 128);
-  static void eigen2PCL(const Eigen::Vector3d &eig, const Eigen::Vector3d &norm, PointT &pcl, int r = 128, int g = 128, int b = 128);
+  static void eigen2PCL(const Eigen::Vector3f &eig, PointT &pcl, int r = 128, int g = 128, int b = 128);
+  static void eigen2PCL(const Eigen::Vector3f &eig, const Eigen::Vector3f &norm, PointT &pcl, int r = 128, int g = 128, int b = 128);
 
   const std::vector <TrianglePlaneData> & getTrianglePlaneData();
   const std::vector <GraspData> & getGraspData();
@@ -70,12 +70,12 @@ public:
   void findGraspableOutline();
 
   void display(pcl::PolygonMesh& mesh);
-  void display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3d>& gripper_transforms, std::vector<double>& grasp_width);
+  void display(pcl::PolygonMesh& mesh, std::vector<Eigen::Isometry3f>& gripper_transforms, std::vector<float>& grasp_width);
   void displayOutline(pcl::PolygonMesh& mesh);
   void saveGraspCandidates(std::ofstream &of);
   void saveContGraspCandidates(std::ofstream &of);
 
-  double getAverageDistance();
+  float getAverageDistance();
 
 private:
   CollisionCheck collision_check_;
@@ -95,9 +95,9 @@ private:
   YAMLConfig config_;
 
   void samplePointsInTriangle(TrianglePlaneData & plane);
-  void samplePointsInLine(const Eigen::Vector3d &norm, Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d direction_vector, LineData & line_data);
+  void samplePointsInLine(const Eigen::Vector3f &norm, Eigen::Vector3f p1, Eigen::Vector3f p2, Eigen::Vector3f direction_vector, LineData & line_data);
   // void makePair
-  void makePair(const Eigen::Vector3d &norm, Eigen::Vector3d new_p, Eigen::Vector3d direction_vector, LineData & line_data);
+  void makePair(const Eigen::Vector3f &norm, Eigen::Vector3f new_p, Eigen::Vector3f direction_vector, LineData & line_data);
 
   void sample();
   void analyticSample ();

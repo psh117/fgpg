@@ -77,16 +77,25 @@ static std::vector<TrianglePlaneData> buildTriangleData(pcl::PolygonMesh & mesh)
     polydata->GetPoint (ptIds[2], p3);
     plane_data.area = vtkTriangle::TriangleArea (p1, p2, p3);
 
-    Eigen::Vector3d v1 = Eigen::Vector3d (p1[0], p1[1], p1[2]) - Eigen::Vector3d (p3[0], p3[1], p3[2]);
-    Eigen::Vector3d v2 = Eigen::Vector3d (p2[0], p2[1], p2[2]) - Eigen::Vector3d (p3[0], p3[1], p3[2]);
-    Eigen::Vector3d n = v1.cross (v2);
+    Eigen::Vector3f v1 = Eigen::Vector3f (p1[0], p1[1], p1[2]) - Eigen::Vector3f (p3[0], p3[1], p3[2]);
+    Eigen::Vector3f v2 = Eigen::Vector3f (p2[0], p2[1], p2[2]) - Eigen::Vector3f (p3[0], p3[1], p3[2]);
+    Eigen::Vector3f n = v1.cross (v2);
     n.normalize ();
     // std::cout << "n: " << n.transpose() << std::endl;
 
     plane_data.points.resize(3);
-    plane_data.points[0] = (Eigen::Map<const Eigen::Vector3d>(p1));
-    plane_data.points[1] = (Eigen::Map<const Eigen::Vector3d>(p2));
-    plane_data.points[2] = (Eigen::Map<const Eigen::Vector3d>(p3));
+    
+    float fp1[3], fp2[3], fp3[3];
+    for (int i = 0; i < 3; i++)
+    {
+      fp1[i] = p1[i];
+      fp2[i] = p2[i];
+      fp3[i] = p3[i];
+    }
+    
+    plane_data.points[0] = (Eigen::Map<const Eigen::Vector3f>(fp1));
+    plane_data.points[1] = (Eigen::Map<const Eigen::Vector3f>(fp2));
+    plane_data.points[2] = (Eigen::Map<const Eigen::Vector3f>(fp3));
     plane_data.normal = n;
 
     triangles.push_back(plane_data);

@@ -44,31 +44,31 @@ public:
   GraspCoverageEvaluator();
 
   void setModel(const std::vector<TrianglePlaneData> & mesh_data);
-  void setModel(const std::vector<Eigen::Vector3d> & mesh_points);
+  void setModel(const std::vector<Eigen::Vector3f> & mesh_points);
 
-  void setGraspPoints(const std::vector<std::pair<Eigen::Vector3d,Eigen::Vector3d> > & grasp_data);
+  void setGraspPoints(const std::vector<std::pair<Eigen::Vector3f,Eigen::Vector3f> > & grasp_data);
 
   void getMinMax3D();
   void getNumberOfBin();
 
-  void setLeafSize(double leaf_size, int orientation_size);
+  void setLeafSize(float leaf_size, int orientation_size);
 
-  double getFullEntropy();
-  double getPosEntropy();
+  float getFullEntropy();
+  float getPosEntropy();
 
 private:
-  std::vector<Eigen::Vector3d> mesh_points_;
-  std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d> > grasp_data_;
-  Eigen::Array3d min_point_;
-  Eigen::Array3d max_point_;
+  std::vector<Eigen::Vector3f> mesh_points_;
+  std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f> > grasp_data_;
+  Eigen::Array3f min_point_;
+  Eigen::Array3f max_point_;
 
   Eigen::Vector3i min_bin_, max_bin_, div_bin_, divb_mul_;
 
   Eigen::Tensor<int, 6> num_points_tensor_full_;
   Eigen::Tensor<int, 3> num_points_tensor_pos_;
 
-  double leaf_size_ {0.05}; // Cube shaped voxel (x=y=z)
-  double inverse_leaf_size_ {20};
+  float leaf_size_ {0.05}; // Cube shaped voxel (x=y=z)
+  float inverse_leaf_size_ {20};
   int orientation_size_ {3};
 
   int total_num_points_ {1};

@@ -1,11 +1,11 @@
 #include "fgpg/hsv2rgb.h"
 
-void HSVtoRGB(int H, double S, double V, int output[3]) {
+void HSVtoRGB(int H, float S, float V, int output[3]) {
     H = H % 360;
-	double C = S * V;
-	double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
-	double m = V - C;
-	double Rs, Gs, Bs;
+	float C = S * V;
+	float X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+	float m = V - C;
+	float Rs, Gs, Bs;
 
 	if(H >= 0 && H < 60) {
 		Rs = C;

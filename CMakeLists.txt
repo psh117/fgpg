@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(fgpg)
 
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+# list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 message("${CMAKE_INSTALL_PREFIX}/include")
 message("${CMAKE_MODULE_PATH}")
 
@@ -14,7 +14,33 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(PCL 1.8 REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(FCL REQUIRED)
+find_package(fcl QUIET)
+
+if (fcl_FOUND)
+  # convert cmake target to variables for catkin_package DEPENDS
+  if(TARGET ${FCL_LIBRARIES})
+    get_target_property(LIBFCL_LOCATION ${FCL_LIBRARIES} LOCATION)
+    get_target_property(LIBFCL_INTERFACE_LINK_LIBRARIES ${FCL_LIBRARIES} INTERFACE_LINK_LIBRARIES)
+    get_target_property(LIBFCL_INCLUDE_DIRS ${FCL_LIBRARIES} INTERFACE_INCLUDE_DIRECTORIES)
+    set(LIBFCL_LIBRARIES ${LIBFCL_LOCATION} ${LIBFCL_INTERFACE_LINK_LIBRARIES})
+  else()
+    set(LIBFCL_LIBRARIES ${FCL_LIBRARIES})
+    set(LIBFCL_INCLUDE_DIRS ${FCL_INCLUDE_DIRS})
+  endif()
+else()
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(LIBFCL_PC REQUIRED fcl)
+  set(LIBFCL_INCLUDE_DIRS ${LIBFCL_PC_INCLUDE_DIRS})
+  # find *absolute* paths to LIBFCL_LIBRARIES
+  set(LIBFCL_LIBRARIES)
+  foreach(_lib ${LIBFCL_PC_LIBRARIES})
+    find_library(_lib_${_lib} ${_lib} HINTS ${LIBFCL_PC_LIBRARY_DIRS})
+    list(APPEND LIBFCL_LIBRARIES ${_lib_${_lib}})
+  endforeach()
+endif()
+
+message("LIBFCL_LIBRARIES: ${LIBFCL_LIBRARIES}")
+message("LIBFCL_INCLUDE_DIRS: ${LIBFCL_INCLUDE_DIRS}")
 
 catkin_package(
   INCLUDE_DIRS include
@@ -28,6 +54,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${LIBFCL_INCLUDE_DIRS}
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
